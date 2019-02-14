@@ -1,0 +1,26 @@
+{
+  "name": "allegro-rest-client",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist/**/*"],
+  "repository": "git@github.com:daksamit/allegro-rest-client.git",
+  "author": "Dominik Aksamit <daksamit@daksamit.pl>",
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.10",
+    "ts-loader": "^5.3.3",
+    "ts-node": "^8.0.2",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "prepare" : "npm run build"
+  }
+}

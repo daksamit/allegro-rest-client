@@ -1,1 +1,3 @@
 # allegro-rest-client
+
+documentation in progress...
