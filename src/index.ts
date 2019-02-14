@@ -62,8 +62,21 @@ class AllegroRestClient {
       .catch((error: any) => {
       });
   }
-  public get(endpoint: string) { // TODO: request
-    console.log(endpoint);
+  public request(endpoint: string, options?: any): Promise<void> { // TODO: request
+    console.log(options ? options.method : "GET", endpoint);
+    if (options && options.data) {
+      options.body = JSON.stringify(options.data);
+    }
+    return fetch(`${this.apiUrl}${endpoint}`, Object.assign({
+      method: "GET",
+      timeout: 12000,
+      headers: {
+        "Authorization": "Bearer " + this.getAccessToken(),
+        "Accept": "application/vnd.allegro.public.v1+json",
+        "Content-Type": "application/vnd.allegro.public.v1+json",
+      },
+    }, options))
+    .then((res: any) => res.json());
   }
   private storeTokens(tokens: any): void { // TODO: any!!
     this.storage.setItem("accessToken", tokens.access_token || null);
