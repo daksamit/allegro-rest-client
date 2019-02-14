@@ -62,7 +62,7 @@ class AllegroRestClient {
       .catch((error: any) => {
       });
   }
-  public request(endpoint: string, options?: any): Promise<void> { // TODO: request
+  public request(endpoint: string, options?: any): Promise<any> { // TODO: request
     console.log(options ? options.method : "GET", endpoint);
     if (options && options.data) {
       options.body = JSON.stringify(options.data);
