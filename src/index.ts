@@ -33,6 +33,7 @@ class AllegroRestClient {
           throw res;
         }
         this.storeTokens(res);
+        console.log("access tokens saved.");
       })
       .catch((error: any) => {
       });
@@ -56,6 +57,7 @@ class AllegroRestClient {
           throw res;
         }
         this.storeTokens(res);
+        console.log("refresh tokens updated.");
       })
       .catch((error: any) => {
       });
