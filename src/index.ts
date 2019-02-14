@@ -1,5 +1,7 @@
 const fetch = require("node-fetch");
 const Storage = require("dom-storage");
+const jwt = require("jsonwebtoken");
+
 class AllegroRestClient {
   public baseUrl: string = "https://allegro.pl";
   public apiUrl: string = "https://api.allegro.pl";
@@ -39,6 +41,8 @@ class AllegroRestClient {
       });
   }
   public getSellerId() {
+    let accessToken = this.getAccessToken();
+    return accessToken ? jwt.decode(accessToken).user_name : null;
   }
   public refreshTokens(): void {
     console.log("refreshing tokens");
