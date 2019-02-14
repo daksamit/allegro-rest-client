@@ -12,9 +12,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "bluebird": "^3.5.3",
     "dom-storage": "^2.1.0",
-    "node-cron": "^2.0.3",
     "node-fetch": "^2.3.0"
   },
   "devDependencies": {
