@@ -1,6 +1,6 @@
 # allegro-rest-client
 
-in progress..
+Client REST API Allegro written in typescript.
 
 register allegro application - https://apps.developer.allegro.pl.allegrosandbox.pl
 
@@ -17,12 +17,20 @@ const clientConfig = { // app client config
   url_redirect: "https://allegro-rest-client.daksamit.pl",
 };
 
-// link to authorize your app
+// link to authorize your app:
 // https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize?response_type=code&client_id=bcfaf324a2104824b81fbd97aea46654&redirect_uri=https://allegro-rest-client.daksamit.pl
 const allegroClient = allegroRest.client(clientConfig, { sandbox: true });
 
-// authorize app with code from above link 
-allegroClient.authorize("code...");
+// authorize app with code from above link:
+allegroClient.authorize("generated_code...");
 // refresh rokens
 allegroClient.refreshTokens();
+// example request allegro rest api:
+let response = await allegroClient.request("/sale/offers?limit=5");
 ```
+
+## helpful links
+
+- [allegro rest api official documentation](https://developer.allegro.pl/documentation)
+
+More extensive documentation and app functionalities are in progress..
