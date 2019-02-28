@@ -25,7 +25,7 @@ class AllegroRestClient {
     this.baseUrl = "https://allegro.pl";
     this.apiUrl = "https://api.allegro.pl";
     this.account = "default";
-    this.storagePath = `./tokens:${this.config.app_name}:${this.account}.json`;
+    this.storagePath = `./tokens:app_name:default.json`;
   }
   public client(clientConfig: IClientConfig, options: IOptions) { // TODO: any
     this.config = clientConfig;
