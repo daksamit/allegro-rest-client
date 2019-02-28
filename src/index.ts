@@ -17,18 +17,20 @@ class AllegroRestClient {
   public baseUrl: string;
   public apiUrl: string;
   public oauthUser: any;
+  private account: string;
   private config: any; // TODO: not any!!
   private storagePath: string;
   private storage: any; // TODO:
   constructor() {
     this.baseUrl = "https://allegro.pl";
     this.apiUrl = "https://api.allegro.pl";
-    this.storagePath = "./tokens:APP:DEFAULT.json";
+    this.account = "default";
+    this.storagePath = `./tokens:${this.config.app_name}:${this.account}.json`;
   }
   public client(clientConfig: IClientConfig, options: IOptions) { // TODO: any
     this.config = clientConfig;
     this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
-    this.storagePath = `./tokens:${this.config.app_name}:${options.account || 'default'}.json`;
+    this.storagePath = `./tokens:${this.config.app_name}:${this.account}.json`;
     this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     if (options.sandbox === true) {
       this.baseUrl = "https://allegro.pl.allegrosandbox.pl";
@@ -56,7 +58,7 @@ class AllegroRestClient {
         console.log("access tokens saved.");
       })
       .catch((error: any) => {
-
+        console.log(error);
       });
   }
   public getSellerId() {
@@ -83,6 +85,7 @@ class AllegroRestClient {
         console.log("refresh tokens updated.");
       })
       .catch((error: any) => {
+        console.log(error);
       });
   }
   public request(endpoint: string, options?: any): Promise<any> { // TODO: request
@@ -99,7 +102,10 @@ class AllegroRestClient {
         "Content-Type": "application/vnd.allegro.public.v1+json",
       },
     }, options))
-      .then((res: any) => res.json());
+      .then((res: any) => res.json())
+      .catch((error: any) => {
+        console.log(error);
+      })
   }
   public get() { }
   public post() { }
