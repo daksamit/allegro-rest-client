@@ -1,6 +1,6 @@
 # allegro-rest-client
 
-Client REST API Allegro written in typescript.
+Allegro REST API client written in typescript.
 
 register allegro application - https://apps.developer.allegro.pl.allegrosandbox.pl
 
@@ -26,7 +26,11 @@ allegroClient.authorize("generated_code...");
 // refresh rokens
 allegroClient.refreshTokens();
 // example request allegro rest api:
-let response = await allegroClient.request("/sale/offers?limit=5");
+try {
+  let response = await allegroClient.request("/sale/offers?limit=5");
+} catch (error) {
+  console.log(error)
+}
 ```
 
 ## helpful links
