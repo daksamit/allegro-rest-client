@@ -17,19 +17,25 @@ class AllegroRestClient {
   public baseUrl: string;
   public apiUrl: string;
   public oauthUser: any;
-  private account: string;
-  private config: any; // TODO: not any!!
+  private config: IClientConfig; // TODO: not any!!
+  private account?: string;
   private storagePath: string;
   private storage: any; // TODO:
   constructor() {
     this.baseUrl = "https://allegro.pl";
     this.apiUrl = "https://api.allegro.pl";
-    this.account = "default";
+    this.config = {
+      app_name: "",
+      client_id: "",
+      client_secret: "",
+      url_redirect: ""
+    }
     this.storagePath = `./tokens:app_name:default.json`;
   }
   public client(clientConfig: IClientConfig, options: IOptions) { // TODO: any
     this.config = clientConfig;
     this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
+    this.account = options.account || "default";
     this.storagePath = `./tokens:${this.config.app_name}:${this.account}.json`;
     this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     if (options.sandbox === true) {
@@ -38,8 +44,8 @@ class AllegroRestClient {
     }
     return this;
   }
-  public authorize(code: string): void {
-    console.log("authorizing app");
+  public async authorize(code: string): Promise<void> {
+    console.log(`authorizing app : ${this.config.app_name}, ${this.account}..`);
     fetch(`${this.baseUrl}/auth/oauth/token?`
       + `grant_type=authorization_code&`
       + `code=${code}&`
@@ -65,8 +71,8 @@ class AllegroRestClient {
     let accessToken = this.getAccessToken();
     return accessToken ? jwt.decode(accessToken).user_name : null;
   }
-  public refreshTokens(): void {
-    console.log("refreshing tokens");
+  public async refreshTokens(): Promise<void> {
+    console.log(`refreshing tokens : ${this.config.app_name}, ${this.account}..`);
     fetch(`${this.baseUrl}/auth/oauth/token?`
       + `grant_type=refresh_token&`
       + `refresh_token=${this.getRefreshToken()}&`
