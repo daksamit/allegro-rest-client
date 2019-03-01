@@ -21,28 +21,17 @@ class AllegroRestClient {
   private account?: string;
   private storagePath: string;
   private storage: any; // TODO:
-  constructor() {
+  constructor(clientConfig: IClientConfig, options: IOptions) { // TODO: any
     this.baseUrl = "https://allegro.pl";
     this.apiUrl = "https://api.allegro.pl";
-    this.config = {
-      app_name: "",
-      client_id: "",
-      client_secret: "",
-      url_redirect: ""
-    }
-    this.storagePath = `./tokens:app_name:default.json`;
-  }
-  public client(clientConfig: IClientConfig, options: IOptions) { // TODO: any
-    this.config = clientConfig;
-    this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
-    this.account = options.account || "default";
-    this.storagePath = `./tokens:${this.config.app_name}:${this.account}.json`;
-    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     if (options.sandbox === true) {
       this.baseUrl = "https://allegro.pl.allegrosandbox.pl";
       this.apiUrl = "https://api.allegro.pl.allegrosandbox.pl";
     }
-    return this;
+    this.config = clientConfig;
+    this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
+    this.account = options.account || "default";
+    this.storagePath = `./tokens:${this.config.app_name}:${this.account}.json`;
   }
   public async authorize(code: string): Promise<void> {
     console.log(`authorizing app : ${this.config.app_name}, ${this.account}..`);
@@ -118,15 +107,18 @@ class AllegroRestClient {
   public put() { }
   public delete() { }
   private storeTokens(tokens: any): void { // TODO: any!!
+    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     this.storage.setItem("accessToken", tokens.access_token || null);
     this.storage.setItem("refreshToken", tokens.refresh_token || null);
   }
   private getAccessToken() {
+    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     return this.storage.getItem("accessToken");
   }
   private getRefreshToken() {
+    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     return this.storage.getItem("refreshToken");
   }
 }
 
-export default new AllegroRestClient();
+export default AllegroRestClient;

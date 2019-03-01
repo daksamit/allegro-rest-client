@@ -7,7 +7,7 @@ register allegro application - https://apps.developer.allegro.pl.allegrosandbox.
 ## example of use
 
 ``` js
-import allegroRest from "allegro-rest-client";
+import AllegroRestClient from "allegro-rest-client";
 
 const clientConfig = { // app client config
   app_name: "rest-client",
@@ -19,7 +19,7 @@ const clientConfig = { // app client config
 
 // link to authorize your app:
 // https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize?response_type=code&client_id=bcfaf324a2104824b81fbd97aea46654&redirect_uri=https://allegro-rest-client.daksamit.pl
-const allegroClient = allegroRest.client(clientConfig, { sandbox: true });
+const allegroClient = new AllegroRestClient(clientConfig, { sandbox: true, account: "default" });
 
 // authorize app with code from above link:
 allegroClient.authorize("generated_code...");
