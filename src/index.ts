@@ -31,7 +31,7 @@ class AllegroRestClient {
     this.config = clientConfig;
     this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
     this.account = options.account || "default";
-    this.storagePath = `./allegro_tokens.json`;
+    this.storagePath = `./allegro_tokens_${this.account}.json`;
   }
   public async authorize(code: string): Promise<void> {
     console.log(`app_name: ${this.config.app_name}, account: ${this.account}, authorizing...`);
@@ -111,16 +111,16 @@ class AllegroRestClient {
   public delete() { }
   private storeTokens(tokens: any): void { // TODO: any!!
     this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-    this.storage.setItem(`${this.config.app_name}_${this.account}_access`, tokens.access_token || null);
-    this.storage.setItem(`${this.config.app_name}_${this.account}_refresh`, tokens.refresh_token || null);
+    this.storage.setItem(`${this.config.app_name}_access`, tokens.access_token || null);
+    this.storage.setItem(`${this.config.app_name}_refresh`, tokens.refresh_token || null);
   }
   private getAccessToken() {
     this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-    return this.storage.getItem(`${this.config.app_name}_${this.account}_access`);
+    return this.storage.getItem(`${this.config.app_name}_access`);
   }
   private getRefreshToken() {
     this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-    return this.storage.getItem(`${this.config.app_name}_${this.account}_refresh`);
+    return this.storage.getItem(`${this.config.app_name}_refresh`);
   }
 }
 
