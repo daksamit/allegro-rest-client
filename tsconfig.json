@@ -18,7 +18,9 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "test",
+    "playground"
   ],
   "paths": {
   }
