@@ -1,10 +1,17 @@
 # allegro-rest-client
 
 Allegro REST API client written in typescript.
-
 register allegro application - https://apps.developer.allegro.pl.allegrosandbox.pl
 
-## example of use
+## Getting Started
+
+Install allegro-rest-client using yarn
+
+```sh
+yarn add allegro-rest-client
+```
+
+### Example of use
 
 ``` js
 import AllegroRestClient from "allegro-rest-client";
@@ -23,15 +30,20 @@ const allegroClient = new AllegroRestClient(clientConfig, { sandbox: true, accou
 
 // authorize app with code from above link:
 allegroClient.authorize("generated_code...");
-// refresh rokens
+// refresh tokens
 allegroClient.refreshTokens();
 // example request allegro rest api:
 try {
   let response = await allegroClient.request("/sale/offers?limit=5");
-} catch (error) {
-  console.log(error)
+} catch (err) {
+  console.log(err)
 }
 ```
+
+## tests
+
+If you want to check app, run `yarn test`. 
+Authorizing app is commented - use for getting tokens at first time.
 
 ## helpful links
 
