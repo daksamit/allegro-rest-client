@@ -108,6 +108,9 @@ class AllegroRestClient {
       options.body = JSON.stringify(options.data);
     }
     const tokens = this.getTokens()
+    if (!tokens) {
+      throw 'access tokens are missing'
+    }
     const accessToken = tokens.access_token
     return fetch(`${this.apiUrl}${endpoint}`, Object.assign({
       method: "GET",
