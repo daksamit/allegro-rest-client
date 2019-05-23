@@ -1,6 +1,6 @@
 {
   "name": "allegro-rest-client",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,23 +12,24 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@keyv/sqlite": "^2.0.0",
     "dom-storage": "^2.1.0",
     "jsonwebtoken": "^8.4.0",
+    "keyv": "^3.1.0",
     "node-fetch": "^2.3.0"
   },
   "devDependencies": {
     "@types/jest": "^24.0.13",
+    "@types/keyv": "^3.1.0",
     "@types/node": "^11.9.3",
     "jest": "^24.8.0",
     "ts-jest": "^24.0.2",
     "ts-loader": "^5.3.3",
     "ts-node": "^8.0.2",
-    "tslint": "^5.12.1",
     "typescript": "^3.3.3"
   },
   "scripts": {
     "build": "tsc",
-    "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "test": "jest",
     "prepare": "npm run build"
   }

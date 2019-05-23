@@ -3,14 +3,19 @@ const Storage = require("dom-storage");
 const jwt = require("jsonwebtoken");
 
 interface IClientConfig {
-  app_name: string;
-  client_id: string;
-  client_secret: string;
-  url_redirect: string;
+  app_name: string
+  client_id: string
+  client_secret: string
+  url_redirect: string
 }
 interface IOptions {
-  sandbox: boolean;
-  account?: string;
+  sandbox: boolean
+  account?: string
+}
+
+interface ITokens {
+  access_token: string
+  refresh_token: string
 }
 
 class AllegroRestClient {
@@ -18,9 +23,10 @@ class AllegroRestClient {
   public apiUrl: string;
   public oauthUser: any;
   private config: IClientConfig; // TODO: not any!!
-  private account?: string;
+  private account: string;
   private storagePath: string;
   private storage: any; // TODO:
+  private tokens: any;
   constructor(clientConfig: IClientConfig, options: IOptions) { // TODO: any
     this.baseUrl = "https://allegro.pl";
     this.apiUrl = "https://api.allegro.pl";
@@ -31,11 +37,18 @@ class AllegroRestClient {
     this.config = clientConfig;
     this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
     this.account = options.account || "default";
+    this.tokens = null
+
     this.storagePath = `./allegro_tokens_${this.account}.json`;
+  }
+  public getSellerId() {
+    const accessToken = this.getAccessToken();
+    return accessToken ? jwt.decode(accessToken).user_name : null;
   }
   public async authorize(code: string): Promise<void> {
     console.log(`app_name: ${this.config.app_name}, account: ${this.account}, authorizing...`);
     try {
+      const authorizeCreatedAt = Math.ceil(Date.now() / 1000)
       let tokensResponse = await fetch(`${this.baseUrl}/auth/oauth/token?`
         + `grant_type=authorization_code&`
         + `code=${code}&`
@@ -49,22 +62,23 @@ class AllegroRestClient {
       if (tokensResponse.error && tokensResponse.error_description) {
         throw tokensResponse;
       }
-      this.storeTokens(tokensResponse);
+      tokensResponse.created_at = authorizeCreatedAt
+      this.storeTokens(tokensResponse); // TODO remove
+      this.setTokens(tokensResponse)
       console.log(`app_name: ${this.config.app_name}, account: ${this.account}, access tokens saved.`);
       return tokensResponse;
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       throw err;
     }
   }
-  public getSellerId() {
-    const accessToken = this.getAccessToken();
-    return accessToken ? jwt.decode(accessToken).user_name : null;
-  }
-  public async refreshTokens(token?: string): Promise<void> {
+  public async refreshTokens(): Promise<void> {
     console.log(`app_name: ${this.config.app_name}, account: ${this.account}, refreshing tokens...`);
     try {
-      let refreshToken = token || this.getRefreshToken();
+      const tokens = this.getTokens()
+      const refreshToken = tokens.refresh_token
+
+      const refreshCreatedAt = Math.ceil(Date.now() / 1000)
       let tokensResponse = await fetch(`${this.baseUrl}/auth/oauth/token?`
         + `grant_type=refresh_token&`
         + `refresh_token=${refreshToken}&`
@@ -78,11 +92,13 @@ class AllegroRestClient {
       if (tokensResponse.error && tokensResponse.error_description) {
         throw tokensResponse;
       }
-      this.storeTokens(tokensResponse);
+      tokensResponse.created_at = refreshCreatedAt
+      this.storeTokens(tokensResponse); // TODO remove
+      this.setTokens(tokensResponse)
       console.log(`app_name: ${this.config.app_name}, account: ${this.account}, refresh tokens updated.`);
       return tokensResponse;
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       throw err;
     }
   }
@@ -91,11 +107,13 @@ class AllegroRestClient {
     if (options && options.data) {
       options.body = JSON.stringify(options.data);
     }
+    const tokens = this.getTokens()
+    const accessToken = tokens.access_token
     return fetch(`${this.apiUrl}${endpoint}`, Object.assign({
       method: "GET",
       timeout: 12000,
       headers: {
-        "Authorization": "Bearer " + this.getAccessToken(),
+        "Authorization": "Bearer " + accessToken,
         "Accept": "application/vnd.allegro.public.v1+json",
         "Content-Type": "application/vnd.allegro.public.v1+json",
       },
@@ -109,6 +127,17 @@ class AllegroRestClient {
   public post() { }
   public put() { }
   public delete() { }
+  public setTokens (tokens: any) { // TODO ! any
+    this.tokens = tokens
+  }
+  public getTokens (): any { // TODO ! any
+    return this.tokens
+  }
+  public getAccount(): string {
+    return this.account
+  }
+
+
   private storeTokens(tokens: any): void { // TODO: any!!
     this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
     this.storage.setItem(`${this.config.app_name}_access`, tokens.access_token || null);
