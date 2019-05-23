@@ -34,7 +34,7 @@ allegroClient.authorize("generated_code...");
 allegroClient.refreshTokens();
 // example request allegro rest api:
 try {
-  let response = await allegroClient.request("/sale/offers?limit=5");
+  let offers = await allegroClient.request("/sale/offers?limit=5");
 } catch (err) {
   console.log(err)
 }
@@ -42,11 +42,11 @@ try {
 
 ## tests
 
-If you want to check app, run `yarn test`. 
+If you want to check app, run `yarn test`. (in progress)
 Authorizing app is commented - use for getting tokens at first time.
 
 ## helpful links
 
 - [allegro rest api official documentation](https://developer.allegro.pl/documentation)
 
-More extensive documentation and app functionalities are in progress..
+Library is still in progress..
