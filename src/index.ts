@@ -1,5 +1,5 @@
 const fetch = require("node-fetch");
-const Storage = require("dom-storage");
+// const Storage = require("dom-storage");
 const jwt = require("jsonwebtoken");
 
 interface IClientConfig {
@@ -24,8 +24,8 @@ class AllegroRestClient {
   public oauthUser: any;
   private config: IClientConfig; // TODO: not any!!
   private account: string;
-  private storagePath: string;
-  private storage: any; // TODO:
+  // private storagePath: string;
+  // private storage: any; // TODO:
   private tokens: any;
   constructor(clientConfig: IClientConfig, options: IOptions) { // TODO: any
     this.baseUrl = "https://allegro.pl";
@@ -39,11 +39,12 @@ class AllegroRestClient {
     this.account = options.account || "default";
     this.tokens = null
 
-    this.storagePath = `./allegro_tokens_${this.account}.json`;
+    // this.storagePath = `./allegro_tokens_${this.account}.json`;
   }
   public getSellerId() {
-    const accessToken = this.getAccessToken();
-    return accessToken ? jwt.decode(accessToken).user_name : null;
+    // const accessToken = this.getAccessToken();
+    const tokens = this.getTokens()
+    return tokens ? jwt.decode(tokens.access_token).user_name : null;
   }
   public async authorize(code: string): Promise<void> {
     console.log(`app_name: ${this.config.app_name}, account: ${this.account}, authorizing...`);
@@ -63,12 +64,11 @@ class AllegroRestClient {
         throw tokensResponse;
       }
       tokensResponse.created_at = authorizeCreatedAt
-      this.storeTokens(tokensResponse); // TODO remove
+      // this.storeTokens(tokensResponse); // TODO remove
       this.setTokens(tokensResponse)
       console.log(`app_name: ${this.config.app_name}, account: ${this.account}, access tokens saved.`);
       return tokensResponse;
     } catch (err) {
-      // console.log(err);
       throw err;
     }
   }
@@ -93,7 +93,7 @@ class AllegroRestClient {
         throw tokensResponse;
       }
       tokensResponse.created_at = refreshCreatedAt
-      this.storeTokens(tokensResponse); // TODO remove
+      // this.storeTokens(tokensResponse); // TODO remove
       this.setTokens(tokensResponse)
       console.log(`app_name: ${this.config.app_name}, account: ${this.account}, refresh tokens updated.`);
       return tokensResponse;
@@ -140,20 +140,19 @@ class AllegroRestClient {
     return this.account
   }
 
-
-  private storeTokens(tokens: any): void { // TODO: any!!
-    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-    this.storage.setItem(`${this.config.app_name}_access`, tokens.access_token || null);
-    this.storage.setItem(`${this.config.app_name}_refresh`, tokens.refresh_token || null);
-  }
-  private getAccessToken() {
-    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-    return this.storage.getItem(`${this.config.app_name}_access`);
-  }
-  private getRefreshToken() {
-    this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-    return this.storage.getItem(`${this.config.app_name}_refresh`);
-  }
+  // private storeTokens(tokens: any): void { // TODO: any!!
+  //   this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
+  //   this.storage.setItem(`${this.config.app_name}_access`, tokens.access_token || null);
+  //   this.storage.setItem(`${this.config.app_name}_refresh`, tokens.refresh_token || null);
+  // }
+  // private getAccessToken() {
+  //   this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
+  //   return this.storage.getItem(`${this.config.app_name}_access`);
+  // }
+  // private getRefreshToken() {
+  //   this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
+  //   return this.storage.getItem(`${this.config.app_name}_refresh`);
+  // }
 }
 
 export default AllegroRestClient;

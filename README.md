@@ -43,6 +43,7 @@ try {
 ## tests
 
 If you want to check app, run `yarn test`. (in progress)
+Authorizing app is commented - use for getting tokens at first time.
 
 ## helpful links
 
