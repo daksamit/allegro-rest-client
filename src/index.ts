@@ -134,29 +134,32 @@ class AllegroRestClient {
       })
   }
   public get(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options, {
+    return this.request(endpoint, Object.assign(options || {}, {
       method: 'GET'
     }))
   }
+  public getOffer(offerId: string | number): Promise<any> {
+    return this.request(`/sale/offers/${offerId}`)
+  }
   public post(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options, {
+    return this.request(endpoint, Object.assign(options || {}, {
       method: 'POST'
     }))
   }
   public put(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options, {
+    return this.request(endpoint, Object.assign(options || {}, {
       method: 'PUT'
     }))
   }
   public delete(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options, {
+    return this.request(endpoint, Object.assign(options || {}, {
       method: 'DELETE'
     }))
   }
-  public setTokens (tokens: any) { // TODO ! any
+  public setTokens(tokens: any) { // TODO ! any
     this.tokens = tokens
   }
-  public getTokens (): any { // TODO ! any
+  public getTokens(): any { // TODO ! any
     return this.tokens
   }
   public getAccount(): string {
