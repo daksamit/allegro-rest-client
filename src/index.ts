@@ -127,8 +127,11 @@ class AllegroRestClient {
     }, options))
       .then((res: any) => res.json())
       .then((res: any) => {
-        if (res && res.errors) {
-          throw res.errors
+        if (res) {
+          if (res.error) // res: { error: string, error_description: string }
+            throw res.error
+          if (res.errors) // res: errors: { code: string, message: string, details: any, path: string, userMessage: string }[]
+            throw res.errors
         }
         return res
       })
