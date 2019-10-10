@@ -1,187 +1,139 @@
-const fetch = require("node-fetch");
-const jwt = require("jsonwebtoken");
+import { getExpiredIn } from "./helpers"
+import { AuthResponse, ClientConfig, ClientOptions } from "./types"
 
-interface IClientConfig {
-  app_name: string
-  client_id: string
-  client_secret: string
-  url_redirect: string
-}
-interface IOptions {
-  sandbox?: boolean
-  logger?: boolean
-  account?: string
-}
+const request = require("request")
+const jwt = require("jsonwebtoken")
 
-interface ITokens {
-  access_token: string
-  refresh_token: string
-}
-
-class AllegroRestClient {
-  public baseUrl: string;
-  public apiUrl: string;
-  public oauthUser: any;
-  private config: IClientConfig; // TODO: not any!!
-  private account: string;
-  private logger: boolean;
-  // private storagePath: string;
-  // private storage: any; // TODO:
-  private tokens: any;
-  constructor(clientConfig: IClientConfig, options: IOptions) { // TODO: any
-    this.baseUrl = "https://allegro.pl";
-    this.apiUrl = "https://api.allegro.pl";
-    this.logger = false;
-    if (options.sandbox === true) {
-      this.baseUrl = "https://allegro.pl.allegrosandbox.pl";
-      this.apiUrl = "https://api.allegro.pl.allegrosandbox.pl";
-    }
-    if (options.logger === true) {
-      this.logger = true;
-    }
-    this.config = clientConfig;
-    this.oauthUser = Buffer.from(`${this.config.client_id}:${this.config.client_secret}`).toString("base64");
-    this.account = options.account || "default";
-    this.tokens = null
-
-    // this.storagePath = `./allegro_tokens_${this.account}.json`;
+const allegroApi = function (config: ClientConfig, options: ClientOptions) {
+  let baseUrl: string = 'https://allegro.pl'
+  let apiUrl: string = 'https://api.allegro.pl'
+  if (options && options.sandbox === true) {
+    baseUrl = 'https://allegro.pl.allegrosandbox.pl'
+    apiUrl = 'https://api.allegro.pl.allegrosandbox.pl'
   }
-  public getSellerId() {
-    // const accessToken = this.getAccessToken();
-    const tokens = this.getTokens()
-    return tokens ? jwt.decode(tokens.access_token).user_name : null;
+  let isLogging: boolean = false
+  if (options && options.logger === true) {
+    isLogging = true
   }
-  public async authorize(code: string): Promise<void> {
-    if (this.logger) console.info(`app_name: ${this.config.app_name}, account: ${this.account}, authorizing...`);
-    try {
-      const authorizeCreatedAt = Math.ceil(Date.now() / 1000)
-      let tokensResponse = await fetch(`${this.baseUrl}/auth/oauth/token?`
-        + `grant_type=authorization_code&`
-        + `code=${code}&`
-        + `redirect_uri=${this.config.url_redirect}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${this.oauthUser}`,
-          },
-        });
-      tokensResponse = await tokensResponse.json();
-      if (tokensResponse.error && tokensResponse.error_description) {
-        throw tokensResponse;
-      }
-      tokensResponse.created_at = authorizeCreatedAt
-      // this.storeTokens(tokensResponse); // TODO remove
-      this.setTokens(tokensResponse)
-      if (this.logger) console.info(`app_name: ${this.config.app_name}, account: ${this.account}, access tokens saved.`);
-      return tokensResponse;
-    } catch (err) {
-      throw err;
-    }
-  }
-  public async refreshTokens(): Promise<void> {
-    if (this.logger) console.info(`app_name: ${this.config.app_name}, account: ${this.account}, refreshing tokens...`);
-    try {
-      const tokens = this.getTokens()
-      const refreshToken = tokens.refresh_token
+  let tokens: AuthResponse
+  const oauthUser: any = Buffer.from(`${config.client_id}:${config.client_secret}`).toString('base64')
+  const account: string = options && options.account || 'default'
 
-      const refreshCreatedAt = Math.ceil(Date.now() / 1000)
-      let tokensResponse = await fetch(`${this.baseUrl}/auth/oauth/token?`
-        + `grant_type=refresh_token&`
-        + `refresh_token=${refreshToken}&`
-        + `redirect_uri=${this.config.url_redirect}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${this.oauthUser}`,
-          },
-        });
-      tokensResponse = await tokensResponse.json();
-      if (tokensResponse.error && tokensResponse.error_description) {
-        throw tokensResponse;
-      }
-      tokensResponse.created_at = refreshCreatedAt
-      // this.storeTokens(tokensResponse); // TODO remove
-      this.setTokens(tokensResponse)
-      if (this.logger) console.info(`app_name: ${this.config.app_name}, account: ${this.account}, refresh tokens updated.`);
-      return tokensResponse;
-    } catch (err) {
-      throw err;
-    }
-  }
-  public request(endpoint: string, options?: any): Promise<any> { // TODO: request
-    if (this.logger) console.info(options ? options.method : "GET", endpoint);
-    if (options && options.data) {
-      options.body = JSON.stringify(options.data);
-    }
-    const tokens = this.getTokens()
-    if (!tokens) {
-      throw new Error(`There is no access_token for account: ${this.account}`)
-    }
-    const accessToken = tokens.access_token
-    return fetch(`${this.apiUrl}${endpoint}`, Object.assign({
-      method: "GET",
-      timeout: 20000,
-      headers: {
-        "Authorization": "Bearer " + accessToken,
-        "Accept": "application/vnd.allegro.public.v1+json",
-        "Content-Type": "application/vnd.allegro.public.v1+json",
-      },
-    }, options))
-      .then((res: any) => res.json())
-      .then((res: any) => {
-        if (res) {
-          if (res.error) // res: { error: string, error_description: string }
-            throw res.error
-          if (res.errors) // res: errors: { code: string, message: string, details: any, path: string, userMessage: string }[]
-            throw res.errors
-        }
-        return res
+  const refresh = async (): Promise<AuthResponse | any> => {
+    if (!tokens || !tokens.refresh_token) {
+      return Promise.reject({
+        error: 'missing_refresh_token',
+        error_description: 'Refresh token is missing or not stored in the app.'
       })
-  }
-  public get(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options || {}, {
-      method: 'GET'
-    }))
-  }
-  public getOffer(offerId: string | number): Promise<any> {
-    return this.request(`/sale/offers/${offerId}`)
-  }
-  public post(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options || {}, {
-      method: 'POST'
-    }))
-  }
-  public put(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options || {}, {
-      method: 'PUT'
-    }))
-  }
-  public delete(endpoint: string, options?: any): Promise<any> {
-    return this.request(endpoint, Object.assign(options || {}, {
-      method: 'DELETE'
-    }))
-  }
-  public setTokens(tokens: any) { // TODO ! any
-    this.tokens = tokens
-  }
-  public getTokens(): any { // TODO ! any
-    return this.tokens
-  }
-  public getAccount(): string {
-    return this.account
+    }
+    if (isLogging) {
+      console.info(`app_name: ${config.app_name}, account: ${account}, refreshing tokens...`)
+    }
+    return new Promise((resolve, reject) => {
+      const refreshOptions = {
+        method: 'POST',
+        uri: `${baseUrl}/auth/oauth/token?`
+          + `grant_type=refresh_token&`
+          + `refresh_token=${tokens.refresh_token}&`
+          + `redirect_uri=${config.url_redirect}`,
+        headers: {
+          Authorization: `Basic ${oauthUser}`,
+        }
+      }
+      request(refreshOptions, (err: any, response: any, body: any) => {
+        body = body && JSON.parse(body)
+        if (err) {
+          return reject({
+            error: 'request_err',
+            error_description: err
+          })
+        }
+        else if (body.error) return reject(body)
+        body.created_at = Math.ceil(Date.now() / 1000)
+        return resolve(body)
+      })
+    })
   }
 
-  // private storeTokens(tokens: any): void { // TODO: any!!
-  //   this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-  //   this.storage.setItem(`${this.config.app_name}_access`, tokens.access_token || null);
-  //   this.storage.setItem(`${this.config.app_name}_refresh`, tokens.refresh_token || null);
-  // }
-  // private getAccessToken() {
-  //   this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-  //   return this.storage.getItem(`${this.config.app_name}_access`);
-  // }
-  // private getRefreshToken() {
-  //   this.storage = new Storage(this.storagePath, { strict: false, ws: "  " });
-  //   return this.storage.getItem(`${this.config.app_name}_refresh`);
-  // }
+  const authorize = async (code: string): Promise<AuthResponse | any> => {
+    if (isLogging) {
+      console.info(`app_name: ${config.app_name}, account: ${account}, authorizing...`)
+    }
+    return new Promise((resolve, reject) => {
+      const authorizeOptions = {
+        method: 'POST',
+        uri: `${baseUrl}/auth/oauth/token?`
+          + `grant_type=authorization_code&`
+          + `code=${code}&`
+          + `redirect_uri=${config.url_redirect}`,
+        headers: {
+          Authorization: `Basic ${oauthUser}`,
+        }
+      }
+      request(authorizeOptions, (err: any, response: any, body: any) => {
+        body = body && JSON.parse(body)
+        if (err) {
+          return reject({
+            error: 'request_err',
+            error_description: err
+          })
+        }
+        else if (body.error) return reject(body)
+        body.created_at = Math.ceil(Date.now() / 1000)
+        return resolve(body)
+      })
+    })
+  }
+
+  const makeRequest = async (endpoint: string, opts?: any): Promise<any> => {
+    if (getExpiredIn(tokens) < 6) {
+      await refresh()
+    }
+    if (!tokens || !tokens.access_token) {
+      return Promise.reject({
+        error: 'missing_access_token',
+        error_description: 'Access token is missing or not stored in the app.'
+      })
+    }
+    if (isLogging) {
+      console.debug(`app_name: ${config.app_name}, account: ${account}, request: ${endpoint}`)
+    }
+    const requestOptions = {
+      uri: `${apiUrl}${endpoint}`,
+      method: opts && opts.method || 'GET',
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+        Accept: 'application/vnd.allegro.public.v1+json'
+      }
+    }
+    return new Promise((resolve, reject) => {
+      request(Object.assign(requestOptions, opts), (err: any, response: any, body: any) => {
+        body = body && JSON.parse(body)
+        if (err) {
+          return reject({
+            error: 'request_err',
+            error_description: err
+          })
+        }
+        else if (body.error && body.errors) return reject(body)
+        return resolve(body)
+      })
+    })
+  }
+
+  return {
+    getAccount: (): string => account,
+    getSellerId: (): string => tokens ? jwt.decode(tokens.access_token).user_name : null,
+
+    authorize,
+    setTokens: (authTokens: AuthResponse) => tokens = authTokens,
+
+    request: makeRequest,
+    get: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'GET' }),
+    post: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'POST' }),
+    put: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'PUT' }),
+    delete: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'DELETE' })
+  }
 }
 
-export default AllegroRestClient;
+export default allegroApi
