@@ -12,17 +12,17 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "jsonwebtoken": "^8.4.0",
-    "node-fetch": "^2.3.0"
+    "jsonwebtoken": "^8.5.1",
+    "request": "^2.88.0"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.13",
-    "@types/node": "^11.9.3",
-    "jest": "^24.8.0",
-    "ts-jest": "^24.0.2",
-    "ts-loader": "^5.3.3",
-    "ts-node": "^8.0.2",
-    "typescript": "^3.3.3"
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.7.12",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.1.0",
+    "ts-loader": "^6.2.0",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.4"
   },
   "scripts": {
     "build": "tsc",
