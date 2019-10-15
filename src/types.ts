@@ -9,7 +9,7 @@ export interface ClientOptions {
   sandbox?: boolean
   logger?: boolean
   account?: string
-  store?: boolean
+  storage?: any // TODO:
 }
 
 export interface AuthResponse {

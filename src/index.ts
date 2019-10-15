@@ -4,7 +4,7 @@ import { AuthResponse, ClientConfig, ClientOptions } from "./types"
 const request = require("request")
 const jwt = require("jsonwebtoken")
 
-const allegroApi = function (config: ClientConfig, options: ClientOptions) {
+const AllegroRestClient = async function (config: ClientConfig, options: ClientOptions) {
   let baseUrl: string = 'https://allegro.pl'
   let apiUrl: string = 'https://api.allegro.pl'
   if (options && options.sandbox === true) {
@@ -12,13 +12,17 @@ const allegroApi = function (config: ClientConfig, options: ClientOptions) {
     apiUrl = 'https://api.allegro.pl.allegrosandbox.pl'
   }
   let isLogging: boolean = false
-  if (options && options.logger === true) {
-    isLogging = true
-  }
-  let tokens: AuthResponse
+  if (options && options.logger === true) isLogging = true
+  const storage = options.storage
   const oauthUser: any = Buffer.from(`${config.client_id}:${config.client_secret}`).toString('base64')
   const account: string = options && options.account || 'default'
+  let tokens: AuthResponse = await storage.get(account) || null
 
+  const storeTokens = async (authTokens: AuthResponse) => {
+    await storage.set(account, authTokens)
+    tokens = authTokens
+  }
+  
   const refresh = async (): Promise<AuthResponse | any> => {
     if (!tokens || !tokens.refresh_token) {
       return Promise.reject({
@@ -40,17 +44,18 @@ const allegroApi = function (config: ClientConfig, options: ClientOptions) {
           Authorization: `Basic ${oauthUser}`,
         }
       }
-      request(refreshOptions, (err: any, response: any, body: any) => {
-        body = body && JSON.parse(body)
+      request(refreshOptions, async (err: any, response: any, body: any) => {
+        const refreshedTokens = body && JSON.parse(body)
         if (err) {
           return reject({
             error: 'request_err',
             error_description: err
           })
         }
-        else if (body.error) return reject(body)
-        body.created_at = Math.ceil(Date.now() / 1000)
-        return resolve(body)
+        else if (refreshedTokens.error) return reject(refreshedTokens)
+        refreshedTokens.created_at = Math.ceil(Date.now() / 1000)
+        storeTokens(refreshedTokens)
+        return resolve(refreshedTokens)
       })
     })
   }
@@ -70,23 +75,24 @@ const allegroApi = function (config: ClientConfig, options: ClientOptions) {
           Authorization: `Basic ${oauthUser}`,
         }
       }
-      request(authorizeOptions, (err: any, response: any, body: any) => {
-        body = body && JSON.parse(body)
+      request(authorizeOptions, async (err: any, response: any, body: any) => {
+        const authorizedTokens = body && JSON.parse(body)
         if (err) {
           return reject({
             error: 'request_err',
             error_description: err
           })
         }
-        else if (body.error) return reject(body)
-        body.created_at = Math.ceil(Date.now() / 1000)
-        return resolve(body)
+        else if (authorizedTokens.error) return reject(authorizedTokens)
+        authorizedTokens.created_at = Math.ceil(Date.now() / 1000)
+        storeTokens(authorizedTokens)
+        return resolve(authorizedTokens)
       })
     })
   }
 
   const makeRequest = async (endpoint: string, opts?: any): Promise<any> => {
-    if (getExpiredIn(tokens) < 6) {
+    if (tokens && tokens.refresh_token && getExpiredIn(tokens) < 6) {
       await refresh()
     }
     if (!tokens || !tokens.access_token) {
@@ -124,10 +130,7 @@ const allegroApi = function (config: ClientConfig, options: ClientOptions) {
   return {
     getAccount: (): string => account,
     getSellerId: (): string => tokens ? jwt.decode(tokens.access_token).user_name : null,
-
     authorize,
-    setTokens: (authTokens: AuthResponse) => tokens = authTokens,
-
     request: makeRequest,
     get: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'GET' }),
     post: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'POST' }),
@@ -136,4 +139,4 @@ const allegroApi = function (config: ClientConfig, options: ClientOptions) {
   }
 }
 
-export default allegroApi
+export default AllegroRestClient

@@ -50,3 +50,5 @@ Authorizing app is commented - use for getting tokens at first time.
 - [allegro rest api official documentation](https://developer.allegro.pl/documentation)
 
 Library is still in progress..
+
+v 0.2.0 - updated API.
