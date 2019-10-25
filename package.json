@@ -26,6 +26,7 @@
     "eslint-config-prettier": "^6.4.0",
     "eslint-plugin-prettier": "^3.1.1",
     "jest": "^24.9.0",
+    "node-storage": "^0.0.9",
     "prettier": "^1.18.2",
     "ts-jest": "^24.1.0",
     "ts-loader": "^6.2.0",
@@ -35,6 +36,6 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "prepare": "npm run build"
+    "prepare": "npm run build && npm run test"
   }
 }
