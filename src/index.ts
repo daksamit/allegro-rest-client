@@ -1,21 +1,30 @@
 import { getExpiredIn } from "./helpers"
-import { AuthResponse, ClientConfig, ClientOptions } from "./types"
+import { AuthResponse, Error, Errors, ClientConfig, ClientOptions } from "./types"
 
 const request = require("request")
 const jwt = require("jsonwebtoken")
 
-const AllegroRestClient = async function (config: ClientConfig, options: ClientOptions) {
+async function AllegroRestClient (config: ClientConfig, options: ClientOptions) {
   let baseUrl: string = 'https://allegro.pl'
   let apiUrl: string = 'https://api.allegro.pl'
   if (options && options.sandbox === true) {
     baseUrl = 'https://allegro.pl.allegrosandbox.pl'
     apiUrl = 'https://api.allegro.pl.allegrosandbox.pl'
   }
-  let isLogging: boolean = false
-  if (options && options.logger === true) isLogging = true
-  const storage = options.storage
   const oauthUser: any = Buffer.from(`${config.client_id}:${config.client_secret}`).toString('base64')
   const account: string = options && options.account || 'default'
+  let isLogging: boolean = (options && options.logger === true)
+  const store: any = {} 
+  let storage = options.storage
+    ? options.storage
+    : {
+      set (tokens: AuthResponse) {
+        store[account] = tokens
+      },
+      get () {
+        return store[account]
+      }
+    }
   let tokens: AuthResponse = await storage.get(account) || null
 
   const storeTokens = async (authTokens: AuthResponse) => {
@@ -91,7 +100,7 @@ const AllegroRestClient = async function (config: ClientConfig, options: ClientO
     })
   }
 
-  const makeRequest = async (endpoint: string, opts?: any): Promise<any> => {
+  const makeRequest = async (endpoint: string, opts?: any): Promise<Error | Errors | any> => {
     if (tokens && tokens.refresh_token && getExpiredIn(tokens) < 6) {
       await refresh()
     }
@@ -112,6 +121,7 @@ const AllegroRestClient = async function (config: ClientConfig, options: ClientO
         Accept: 'application/vnd.allegro.public.v1+json'
       }
     }
+    
     return new Promise((resolve, reject) => {
       request(Object.assign(requestOptions, opts), (err: any, response: any, body: any) => {
         body = body && JSON.parse(body)
@@ -121,7 +131,7 @@ const AllegroRestClient = async function (config: ClientConfig, options: ClientO
             error_description: err
           })
         }
-        else if (body.error && body.errors) return reject(body)
+        else if (body.error || body.errors) return reject(body)
         return resolve(body)
       })
     })
@@ -139,4 +149,11 @@ const AllegroRestClient = async function (config: ClientConfig, options: ClientO
   }
 }
 
-export default AllegroRestClient
+export {
+  AllegroRestClient,
+  ClientConfig,
+  ClientOptions,
+  AuthResponse,
+  Error,
+  Errors,
+}
