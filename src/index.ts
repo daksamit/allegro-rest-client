@@ -42,7 +42,7 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
     if (isLogging) {
       console.info(`app_name: ${config.app_name}, account: ${account}, refreshing tokens...`)
     }
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const refreshOptions = {
         method: 'POST',
         uri:
