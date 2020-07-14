@@ -9,6 +9,7 @@
     "sourceMap": true,
     "declaration": true,
     "strict": true,
+    "noImplicitAny": false,
     "esModuleInterop": true,
     "outDir": "dist",
     "baseUrl": "./src"
@@ -20,7 +21,5 @@
     "node_modules",
     "dist",
     "tests"
-  ],
-  "paths": {
-  }
+  ]
 }
