@@ -2,7 +2,7 @@ import { AllegroRestClient } from '../src'
 import * as types from '../src/types'
 
 const Storage = require('node-storage')
-const storage = new Storage('tmpstorage')
+const storage = new Storage('_tmpstorage')
 storage.set = storage.put
 
 const clientConfig = {
