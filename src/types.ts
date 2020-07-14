@@ -3,14 +3,23 @@ export interface ClientConfig {
   type: string
   client_id: string
   client_secret: string
-  url_redirect: string
+  url_redirect?: string
 }
 
 export interface ClientOptions {
   sandbox?: boolean
   logger?: boolean
   account?: string
-  storage?: any // TODO:
+  storage?: any
+}
+
+export interface DeviceResponse {
+  device_code: string
+  expires_in: number
+  user_code: string
+  interval: number
+  verification_uri: string
+  verification_uri_complete: string
 }
 
 export interface AuthResponse {
