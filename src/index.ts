@@ -1,5 +1,5 @@
 import { getExpiresInHours } from './helpers'
-import { AuthResponse, Error, Errors, ClientConfig, ClientOptions } from './types'
+import { DeviceResponse, AuthResponse, Error, Errors, ClientConfig, ClientOptions } from './types'
 
 import request from 'request'
 import * as jwt from 'jsonwebtoken'
@@ -30,6 +30,14 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
   const storeTokens = async (authTokens: AuthResponse): Promise<void> => {
     await storage.set(account, authTokens)
     tokens = authTokens
+  }
+
+  const getSellerId = () => {
+    if (tokens && tokens.access_token) {
+      const decoded: any = jwt.decode(tokens.access_token)
+      return (decoded && decoded.user_name) || null
+    }
+    return null
   }
 
   const refresh = async (): Promise<AuthResponse | Error> => {
@@ -72,9 +80,70 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
     })
   }
 
-  const authorize = async (code: string): Promise<AuthResponse | Error> => {
+  const bindApp = async (): Promise<DeviceResponse | Error> => {
     if (isLogging) {
-      console.info(`app_name: ${config.app_name}, account: ${account}, authorizing...`)
+      console.info(`app_name: ${config.app_name}, account: ${account}, binding app...`)
+    }
+    return new Promise((resolve, reject) => {
+      const authorizeOptions = {
+        method: 'POST',
+        uri: `${baseUrl}/auth/oauth/device`,
+        headers: {
+          Authorization: `Basic ${oauthUser}`,
+          'Content-Type': `application/x-www-form-urlencoded`,
+        },
+        form: {
+          client_id: config.client_id,
+        },
+      }
+      request(authorizeOptions, async (err: any, response: any, body: any) => {
+        const deviceOptions = body && JSON.parse(body)
+        if (err) {
+          return reject({
+            error: 'request_err',
+            error_description: err,
+          })
+        } else if (deviceOptions.error) return reject(deviceOptions)
+        return resolve(deviceOptions)
+      })
+    })
+  }
+
+  const authorizeDevice = async (device_code: string): Promise<AuthResponse | Error> => {
+    if (isLogging) {
+      console.info(`app_name: ${config.app_name}, account: ${account}, authorizing device...`)
+    }
+    return new Promise((resolve, reject) => {
+      const authorizeOptions = {
+        method: 'POST',
+        uri:
+          `${baseUrl}/auth/oauth/token?` +
+          `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&` +
+          `device_code=${device_code}`,
+        headers: {
+          Authorization: `Basic ${oauthUser}`,
+        },
+      }
+      request(authorizeOptions, async (err: any, response: any, body: any) => {
+        const authorizedTokens = body && JSON.parse(body)
+        if (err) {
+          return reject({
+            error: 'request_err',
+            error_description: err,
+          })
+        } else if (authorizedTokens.error) {
+          return reject(authorizedTokens)
+        }
+        authorizedTokens.created_at = Math.ceil(Date.now() / 1000)
+        await storeTokens(authorizedTokens)
+        return resolve(authorizedTokens)
+      })
+    })
+  }
+
+  const authorizeWeb = async (code: string): Promise<AuthResponse | Error> => {
+    if (isLogging) {
+      console.info(`app_name: ${config.app_name}, account: ${account}, authorizing web...`)
     }
     return new Promise((resolve, reject) => {
       const authorizeOptions = {
@@ -95,7 +164,9 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
             error: 'request_err',
             error_description: err,
           })
-        } else if (authorizedTokens.error) return reject(authorizedTokens)
+        } else if (authorizedTokens.error) {
+          return reject(authorizedTokens)
+        }
         authorizedTokens.created_at = Math.ceil(Date.now() / 1000)
         await storeTokens(authorizedTokens)
         return resolve(authorizedTokens)
@@ -103,11 +174,11 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
     })
   }
 
-  const makeRequest = async (endpoint: string, opts?: any): Promise<any | Error | Errors> => {
+  const makeRequest = async (endpoint: string, opts: any = {}): Promise<any | Error | Errors> => {
     if (isLogging) {
       console.debug(`tokens expire in ${getExpiresInHours(tokens).toFixed(2)} hours`)
     }
-    if (tokens && tokens.refresh_token && getExpiresInHours(tokens) < 6) {
+    if (tokens && tokens.refresh_token && getExpiresInHours(tokens) < 12) {
       await refresh()
     }
     if (!tokens || !tokens.access_token) {
@@ -121,15 +192,17 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
     }
     const requestOptions = {
       uri: `${apiUrl}${endpoint}`,
-      method: (opts && opts.method) || 'GET',
+      method: 'GET',
+      ...opts,
       headers: {
         Authorization: `Bearer ${tokens.access_token}`,
         Accept: 'application/vnd.allegro.public.v1+json',
+        ...opts.headers,
       },
     }
 
     return new Promise((resolve, reject) => {
-      request(Object.assign(requestOptions, opts), (err: any, response: any, body: any) => {
+      request(requestOptions, (err: any, response: any, body: any) => {
         body = body && JSON.parse(body)
         if (err) {
           return reject({
@@ -143,16 +216,11 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
   }
 
   return {
+    bindApp: config.type === 'device' ? bindApp : undefined,
+    authorize: config.type === 'device' ? authorizeDevice : authorizeWeb,
     getAccount: (): string => account,
+    getSellerId: (): string | null => getSellerId(),
     getExpiresInHours: (): string => getExpiresInHours(tokens).toFixed(2),
-    getSellerId: (): string | null => {
-      if (tokens && tokens.access_token) {
-        const decoded: any = jwt.decode(tokens.access_token)
-        return (decoded && decoded.user_name) || null
-      }
-      return null
-    },
-    authorize: authorize,
     request: makeRequest,
     get: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'GET' }),
     post: (endpoint: string, opts?: any) => makeRequest(endpoint, { ...opts, method: 'POST' }),
@@ -161,4 +229,4 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
   }
 }
 
-export { AllegroRestClient, ClientConfig, ClientOptions, AuthResponse, Error, Errors }
+export { AllegroRestClient, ClientConfig, ClientOptions, DeviceResponse, AuthResponse, Error, Errors }
