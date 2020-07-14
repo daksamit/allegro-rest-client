@@ -1,7 +1,7 @@
 {
   "name": "allegro-rest-client",
-  "version": "0.2.2",
-  "description": "",
+  "version": "1.1.0",
+  "description": "Allegro Rest Client wrapper, for managing auctions and allegro.pl resources",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -9,34 +9,37 @@
   ],
   "repository": "git@github.com:daksamit/allegro-rest-client.git",
   "author": "Dominik Aksamit <daksamit@daksamit.pl>",
-  "keywords": [],
+  "keywords": [
+    "allegro.pl",
+    "allegro-rest-client"
+  ],
   "license": "MIT",
-  "dependencies": {
-    "jsonwebtoken": "^8.5.1",
-    "request": "^2.88.0"
-  },
-  "devDependencies": {
-    "@types/jest": "^24.0.18",
-    "@types/jsonwebtoken": "^8.3.5",
-    "@types/node": "^12.7.12",
-    "@types/request": "^2.48.3",
-    "@typescript-eslint/eslint-plugin": "^2.5.0",
-    "@typescript-eslint/parser": "^2.5.0",
-    "eslint": "^6.5.1",
-    "eslint-config-prettier": "^6.4.0",
-    "eslint-plugin-prettier": "^3.1.1",
-    "jest": "^24.9.0",
-    "node-storage": "^0.0.9",
-    "prettier": "^1.18.2",
-    "ts-jest": "^24.1.0",
-    "ts-loader": "^6.2.0",
-    "ts-node": "^8.4.1",
-    "typescript": "^3.6.4",
-    "uuid": "^3.3.3"
-  },
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "prepare": "npm run build && npm run test"
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.3",
+    "@types/jsonwebtoken": "^8.5.0",
+    "@types/node": "^14.0.14",
+    "@types/request": "^2.48.5",
+    "@typescript-eslint/eslint-plugin": "^3.5.0",
+    "@typescript-eslint/parser": "^3.5.0",
+    "eslint": "^7.3.1",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "jest": "^26.1.0",
+    "node-storage": "^0.0.9",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.1",
+    "ts-loader": "^7.0.5",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5",
+    "uuid": "^8.2.0"
   }
 }
