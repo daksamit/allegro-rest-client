@@ -1,8 +1,7 @@
-import { getExpiresInHours } from './helpers'
-import { DeviceResponse, AuthResponse, Error, Errors, ClientConfig, ClientOptions } from './types'
-
-import request from 'request'
 import * as jwt from 'jsonwebtoken'
+import request from 'request'
+import { getExpiresInHours } from './helpers'
+import { AuthResponse, ClientConfig, ClientOptions, DeviceResponse, Error, Errors } from './types'
 
 async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
   let baseUrl = 'https://allegro.pl'
@@ -178,7 +177,7 @@ async function AllegroRestClient(config: ClientConfig, options: ClientOptions) {
     if (isLogging) {
       console.debug(`tokens expire in ${getExpiresInHours(tokens).toFixed(2)} hours`)
     }
-    if (tokens && tokens.refresh_token && getExpiresInHours(tokens) < 12) {
+    if (tokens && tokens.refresh_token && getExpiresInHours(tokens) < 1) {
       await refresh()
     }
     if (!tokens || !tokens.access_token) {
